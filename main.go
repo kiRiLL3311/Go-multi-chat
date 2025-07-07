@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kiRiLL3311/Go-multi-chat/controllers"
 	"github.com/kiRiLL3311/Go-multi-chat/initializers"
+	"github.com/kiRiLL3311/Go-multi-chat/middleware"
 )
 
 func init() {
@@ -42,5 +43,12 @@ func main() {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/login")
 	})
+
+	// Required auth
+	protected := router.Group("/")
+	protected.Use(middleware.RequireAuth)
+	{
+
+	}
 
 }
