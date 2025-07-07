@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+</head>
+<body>
+    <h1>Create Account</h1>
+    <form method="POST" action="/signup">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div>
+            <button type="submit">Sign Up</button>
+        </div>
+    </form>
+    
+    {{ if .error }}
+    <div style="color: red; margin-top: 20px;">
+        Error: {{ .error }}
+    </div>
+    {{ end }}
+    
+    {{ if .success }}
+    <div style="color: green; margin-top: 20px;">
+        Account created successfully! Redirecting to login...
+        <script>
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 2000);
+        </script>
+    </div>
+    {{ end }}
+</body>
+</html>
