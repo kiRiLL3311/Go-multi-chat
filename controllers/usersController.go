@@ -109,3 +109,23 @@ func Login(c *gin.Context) {
 
 	c.Redirect(http.StatusFound, "/chat")
 }
+
+func ChatPage(c *gin.Context) {
+	// Get user from context
+	userValue, exists := c.Get("user")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	// Type assert to pointer (*models.User)
+	userPtr, ok := userValue.(*models.User)
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.HTML(http.StatusOK, "chat.html", gin.H{
+		"Username": userPtr.Username,
+	})
+}

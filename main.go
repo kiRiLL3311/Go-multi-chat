@@ -1,13 +1,16 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiRiLL3311/Go-multi-chat/controllers"
 	"github.com/kiRiLL3311/Go-multi-chat/initializers"
 	"github.com/kiRiLL3311/Go-multi-chat/middleware"
+	"github.com/kiRiLL3311/Go-multi-chat/websocket"
 )
 
 func init() {
@@ -48,7 +51,13 @@ func main() {
 	protected := router.Group("/")
 	protected.Use(middleware.RequireAuth)
 	{
+		// The route to serve the chat page
+		protected.GET("/chat", controllers.ChatPage)
 
+		// The WebSocket endpoint, also handled by Gin
+		protected.GET("/ws", websocket.HandleConnections)
 	}
 
+	log.Println("Server running on " + os.Getenv("HOST"))
+	router.Run(os.Getenv("PORT"))
 }
