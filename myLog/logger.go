@@ -1,4 +1,4 @@
-package mylog
+package myLog
 
 import (
 	"log/slog"
