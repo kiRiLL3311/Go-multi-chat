@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -22,12 +23,14 @@ func Signup(c *gin.Context) {
 	// Bind based on content type
 	if c.Request.Header.Get("Content-Type") == "application/json" {
 		if c.BindJSON(&body) != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body"})
+			c.Status(http.StatusBadRequest)
+			slog.Error("Signup: Failed to read JSON data(body)")
 			return
 		}
 	} else {
 		if c.Bind(&body) != nil {
-			c.HTML(http.StatusBadRequest, "signup.html", gin.H{"error": "Failed to read form data"})
+			c.Status(http.StatusBadRequest)
+			slog.Error("Signup: Failed to read Form data(body)")
 			return
 		}
 	}
@@ -35,7 +38,8 @@ func Signup(c *gin.Context) {
 	// Hash the password
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "signup.html", gin.H{"error": "Failed to hash password"})
+		c.Status(http.StatusBadRequest)
+		slog.Error("Signup: Failed to hash the password")
 		return
 	}
 
@@ -44,7 +48,8 @@ func Signup(c *gin.Context) {
 	result := initializers.DB.Create(&user)
 
 	if result.Error != nil {
-		c.HTML(http.StatusBadRequest, "signup.html", gin.H{"error": "Username already exists"})
+		c.Status(http.StatusBadRequest)
+		slog.Warn("Signup: Username alreay exists")
 		return
 	}
 
@@ -64,12 +69,14 @@ func Login(c *gin.Context) {
 	// Bind based on content type
 	if c.Request.Header.Get("Content-Type") == "application/json" {
 		if c.BindJSON(&body) != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body"})
+			c.Status(http.StatusBadRequest)
+			slog.Error("Login: Failed to read JSON data(body)")
 			return
 		}
 	} else {
 		if c.Bind(&body) != nil {
-			c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Failed to read form data"})
+			c.Status(http.StatusBadRequest)
+			slog.Error("Login: Failed to read Form data(body)")
 			return
 		}
 	}
@@ -79,14 +86,16 @@ func Login(c *gin.Context) {
 	initializers.DB.First(&user, "username = ?", body.Username)
 
 	if user.ID == 0 {
-		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Invalid username or password"})
+		c.Status(http.StatusBadRequest)
+		slog.Info("Login: Invalid username or password")
 		return
 	}
 
 	// Compare sent in pass with saved user pass hash
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Invalid username or password"})
+		c.Status(http.StatusBadRequest)
+		slog.Info("Login: Invalid password")
 		return
 	}
 
@@ -99,13 +108,14 @@ func Login(c *gin.Context) {
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
 	if err != nil {
-		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Failed to create token"})
+		c.Status(http.StatusBadRequest)
+		slog.Error("Login: Failed to create a token")
 		return
 	}
 
 	// Set cookie and redirect to protected page
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", tokenString, 3600*5, "", "", false, true)
+	c.SetCookie("Authorization", tokenString, 3600*24*15, "", "", false, true)
 
 	c.Redirect(http.StatusFound, "/chat")
 }
