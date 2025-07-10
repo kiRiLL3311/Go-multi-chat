@@ -10,6 +10,7 @@ import (
 	"github.com/kiRiLL3311/Go-multi-chat/controllers"
 	"github.com/kiRiLL3311/Go-multi-chat/initializers"
 	"github.com/kiRiLL3311/Go-multi-chat/middleware"
+	"github.com/kiRiLL3311/Go-multi-chat/myLog"
 	"github.com/kiRiLL3311/Go-multi-chat/websocket"
 )
 
@@ -21,6 +22,10 @@ func init() {
 
 func main() {
 	router := gin.Default()
+
+	// Initialize logger
+	myLog.InitLog()
+	defer myLog.CloseLog()
 
 	templatePath := "./templates"
 
