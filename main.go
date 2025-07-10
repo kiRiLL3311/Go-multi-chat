@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -63,6 +63,7 @@ func main() {
 		protected.GET("/ws", websocket.HandleConnections)
 	}
 
-	log.Println("Server running on " + os.Getenv("HOST"))
+	inf := "Server running on" + os.Getenv("HOST")
+	slog.Info(inf)
 	router.Run(os.Getenv("PORT"))
 }
