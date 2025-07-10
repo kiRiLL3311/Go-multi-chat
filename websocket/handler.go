@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -31,18 +31,17 @@ var (
 )
 
 func HandleConnections(c *gin.Context) {
-	// Authenticate the user from the JWT cookie BEFORE upgrading
-	middleware.RequireAuth(c)
 	user, ok := middleware.GetUserFromContext(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not in context"})
+		c.Status(http.StatusUnauthorized)
+		slog.Error("Ws: User not in context")
 		return
 	}
 
 	// Upgrade the HTTP connection to a WebSocket connection
 	ws, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade error: %v", err)
+		slog.Error("Ws: Websocket upgrade error", "error", err)
 		return
 	}
 	defer ws.Close()
@@ -53,7 +52,7 @@ func HandleConnections(c *gin.Context) {
 	clients[ws] = client
 	mutex.Unlock()
 
-	log.Printf("Client connected: %s", client.Username)
+	slog.Info("Ws: Client connected", "username", client.Username)
 	broadcast(fmt.Sprintf("System: %s joined the chat", client.Username))
 
 	// Handle incoming messages
@@ -74,7 +73,7 @@ func HandleConnections(c *gin.Context) {
 	mutex.Unlock()
 
 	broadcast(fmt.Sprintf("System: %s left the chat", client.Username))
-	log.Printf("Client disconnected: %s", client.Username)
+	slog.Info("Ws: Client disconnected", "username", client.Username)
 }
 
 // Broadcast function to send to all connected clients
@@ -82,11 +81,11 @@ func broadcast(message string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	log.Printf("Broadcasting: %s", message)
+	slog.Info("Ws: Broadcasting message", "message", message)
 	for conn := range clients {
 		err := conn.WriteMessage(websocket.TextMessage, []byte(message))
 		if err != nil {
-			log.Printf("Error broadcasting to client: %v", err)
+			slog.Info("Ws: Error broadcasting to client", "error", err)
 			conn.Close()
 			delete(clients, conn)
 		}
